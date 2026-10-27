@@ -1,8 +1,10 @@
 <div align="center">
 
+<img src="assets/logo.png" width="240" alt="Omapower logo">
+
 # Omapower
 
-<img src="assets/bolt.svg" width="28" alt="Performance"> &nbsp;&nbsp; <img src="assets/yin-yang.svg" width="28" alt="Balanced"> &nbsp;&nbsp; <img src="assets/recycle.svg" width="28" alt="Power saver">
+<picture><source media="(prefers-color-scheme: dark)" srcset="assets/bolt-dark.svg"><img src="assets/bolt.svg" width="28" alt="Performance"></picture> &nbsp;&nbsp; <picture><source media="(prefers-color-scheme: dark)" srcset="assets/yin-yang-dark.svg"><img src="assets/yin-yang.svg" width="28" alt="Balanced"></picture> &nbsp;&nbsp; <picture><source media="(prefers-color-scheme: dark)" srcset="assets/recycle-dark.svg"><img src="assets/recycle.svg" width="28" alt="Power saver"></picture>
 
 **Performance when you need it. Your usual profile when you don't.**
 
