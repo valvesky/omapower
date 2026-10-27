@@ -1,44 +1,20 @@
+<div align="center">
+
 # Omapower
 
-A per-user process watcher for power-profiles-daemon, with an optional Omarchy bar widget. It holds the performance profile while a whitelisted process is running and releases the hold afterward, restoring the profile selected underneath it (not necessarily balanced).
+<img src="https://raw.githubusercontent.com/FortAwesome/Font-Awesome/7.x/svgs/solid/bolt.svg" width="28" alt="Performance"> &nbsp;&nbsp; <img src="https://raw.githubusercontent.com/FortAwesome/Font-Awesome/7.x/svgs/solid/yin-yang.svg" width="28" alt="Balanced"> &nbsp;&nbsp; <img src="https://raw.githubusercontent.com/FortAwesome/Font-Awesome/7.x/svgs/solid/recycle.svg" width="28" alt="Power saver">
 
-## Requirements
+**Performance when you need it. Your usual profile when you don't.**
 
-Linux `/proc`, systemd user services, power-profiles-daemon (`powerprofilesctl`), GLib/GIO and JSON-GLib, and Omarchy/Quickshell plus Font Awesome 7 Free Solid for the widget. Building also requires a C compiler, Linux headers, make and pkg-config. Kernel process events require `CONFIG_CONNECTOR` and `CONFIG_PROC_EVENTS`; availability and permissions are probed at startup, without requesting additional privileges.
+</div>
 
-## Configuration
+Omapower watches your processes and holds the performance profile while a configured command is running. An optional Omarchy bar widget shows the current profile and lets you manage the service and command list.
 
-By default Omapower watches `rustc` and `cargo` owned by the current user. To override the whitelist, create `~/.config/omapower/config.json`:
+## Get started
 
-```json
-{"commands": ["rustc", "cargo"]}
-```
+You'll need Linux, power-profiles-daemon, a system D-Bus, GLib/GIO and JSON-GLib. To build, install a C compiler, Linux headers, make and pkg-config. The optional widget also needs Omarchy/Quickshell and Font Awesome 7 Free Solid.
 
-Names are exact Linux process `comm` names (at most 15 bytes), not paths or command-line arguments. Changes are picked up automatically. In the panel, use `+` to add a name or `×` to remove it; changes are saved to this file even if the service is stopped. The command-line equivalents are `omapower --add NAME` and `omapower --remove NAME`. Editing preserves other JSON fields and serializes Omapower's own writers, but does not lock out external editors. Invalid configuration stops the service and cannot be edited from the panel; correct it manually and check `journalctl --user -u omapower`.
-
-## Event-driven operation
-
-Omapower subscribes to Linux's proc connector (`NETLINK_CONNECTOR` / `CN_IDX_PROC`) before taking its initial `/proc` snapshot. Fork, exec, process-name and UID changes update individual processes through GLib's event loop. Matching processes are identified by PID and start time; pidfds, when available, also signal their exit. Thread names are not treated as process names, and an exited, unreaped process does not keep a hold. A zombie leader whose other threads are still executing remains active when pidfds are available.
-
-Kernel notifications are best-effort: a process may finish before its name can be inspected or a hold can be acquired. Omapower rescans after detectable stream loss and once every 60 seconds to recover from silent drops. Configuration uses directory notifications, including atomic replacement, deletion/recreation and symlink-target updates; it is not reparsed on each process event. Status is written to `$XDG_RUNTIME_DIR/omapower.json` only when it changes.
-
-If event subscription fails or is not acknowledged, Omapower logs the reason and falls back to scanning `/proc` every 500 ms. `omapower --poll` explicitly selects this fallback. The status file's `monitor` field reports `connecting`, `events` or `polling`, and the widget identifies polling in its service description. Older kernels and noninitial PID/user/network namespaces can restrict event access. Do not add root or capabilities just to avoid this fallback.
-
-Builds started by another user or outside the service's visible PID namespace are not detected. Running Cargo for non-build commands also activates performance. A manual profile change that causes the daemon to release the hold is respected until no matching processes remain. Other applications' holds, thermal limits and system policy can affect the effective profile.
-
-Power-profile calls are asynchronous. If power-profiles-daemon disappears, stale cookies are invalidated and an appropriate hold is acquired when it returns. Release failures retain the cookie and are retried; after three failed attempts, Omapower exits and closes its connection so the daemon drops the hold. An ambiguous acquisition failure or system-bus disconnection also causes an exit; the user service restarts it. Shutdown drops connection-owned holds, including pending acquisitions.
-
-If explicit launch integration suits your workflow, no watcher is necessary:
-
-```sh
-powerprofilesctl launch --profile performance -- cargo build
-```
-
-This acquires the hold before the command starts, unlike reactive process detection.
-
-## Local installation
-
-Run `make` in this repository and keep it at a stable path. The widget requires the `plugin` directory to be linked from the config directory as described below, with the compiled `omapower` binary alongside it in the repository. Its persistent `omapower --watch-widget` helper observes systemd unit changes (`Subscribe` / `PropertiesChanged`) and configuration notifications independently of the automation service. Create `~/.config/systemd/user/omapower.service` with:
+Build with `make` and keep the repository at a stable path. Create `~/.config/systemd/user/omapower.service`, replacing the path with the absolute path to your built binary:
 
 ```ini
 [Unit]
@@ -54,12 +30,44 @@ RestartSec=5
 WantedBy=default.target
 ```
 
-Run `systemctl --user daemon-reload` and `systemctl --user enable --now omapower`. Link `plugin` to `~/.config/omarchy/plugins/raw.omapower`, then use `omarchy plugin enable raw.omapower` to add the widget. The widget displays ⚡ for performance, ☯ for balanced, ♻ for power-saver, and `?` for an unknown profile. It reflects the actual system profile even if the Omapower service is stopped; hover for service details. Click it to view the configured whitelist and start or stop the user service. The toggle changes the running service only; it does not change whether systemd starts it at login. Service state and whitelist changes arrive through the persistent helper; the current power profile uses Quickshell's existing reactive `PowerProfiles` service. There are no periodic `systemctl`, shell whitelist or `busctl` queries. A one-shot retry restarts a failed helper after five seconds. The widget is optional: automation runs independently of the shell.
+```sh
+systemctl --user daemon-reload
+systemctl --user enable --now omapower
+```
 
-After rebuilding an existing installation, restart `omapower.service` and reload the shell/plugin to use the updated code. Stop with `systemctl --user disable --now omapower`; remove the plugin link and service file to uninstall. No system files or sudo are needed.
+For the optional widget, link this repository's `plugin` directory to `~/.config/omarchy/plugins/raw.omapower` (or under `$XDG_CONFIG_HOME` if set), then run `omarchy plugin enable raw.omapower`. Click the widget to manage commands or start and stop the service. The toggle doesn't change whether the service starts at login.
+
+After rebuilding, restart the service and reload the shell/plugin. To uninstall, run `systemctl --user disable --now omapower` and remove the service file and plugin link.
+
+## Choose commands
+
+Omapower watches `rustc` and `cargo` by default. Add or remove names in the widget, or use:
+
+```sh
+omapower --add NAME
+omapower --remove NAME
+```
+
+Names must match Linux process `comm` names exactly: 1–15 bytes, without slashes or newlines. They are not paths or command-line arguments. The list lives in `$XDG_CONFIG_HOME/omapower/config.json` (normally `~/.config/omapower/config.json`):
+
+```json
+{"commands": ["rustc", "cargo"]}
+```
+
+Changes are picked up automatically. An invalid file stops the service and prevents widget edits; fix it manually and check `journalctl --user -u omapower`. Omapower serializes its own edits, but external editors aren't locked out.
+
+## How it works
+
+Omapower watches processes owned by your user in its visible PID namespace. It uses kernel process events when available, falling back to a 500 ms scan when they aren't; `omapower --poll` forces scanning. Event detection is best-effort, so very short-lived processes may be missed. You don't need root or extra capabilities.
+
+A manual profile change that releases Omapower's hold is respected until the matching processes finish. Other applications' holds and system policy can also affect the effective profile. The service handles daemon restarts and retries failed releases; systemd restarts it after an unrecoverable error.
+
+For a command you launch yourself, `powerprofilesctl` offers a simpler alternative that acquires the hold before the command starts:
+
+```sh
+powerprofilesctl launch --profile performance -- cargo build
+```
 
 ## Tests
 
-`make test` runs the C configuration/process tests, command-line edit tests, JavaScript parser tests and isolated D-Bus integration tests. It requires `jq`, Node.js, `dbus-run-session`, and system Python with PyGObject (`python-gobject` on Arch; override `PYTHON` if necessary). When Quickshell is installed, it also runs a headless smoke test using the real widget/I/O components with visual-only Omarchy stubs.
-
-Tests cover process identity and thread handling, subscription denial/timeouts, malformed packets, daemon replacement, pending calls, manual overrides, failed releases, zombie exit, configuration replacement/recreation/symlinks, stable idle status, fallback scanning, and systemd/widget notifications. All power-profile and systemd calls in integration tests go to private mock services, not the live system.
+Run `make test` for the C, CLI, JavaScript and isolated D-Bus integration tests. These require `jq`, Node.js, `dbus-run-session` and Python with PyGObject (`python-gobject` on Arch; override `PYTHON` if needed). The tests use mock power-profile and systemd services; check the widget in Omarchy separately.
