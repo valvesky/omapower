@@ -2,7 +2,7 @@
 
 # Omapower
 
-<img src="https://raw.githubusercontent.com/FortAwesome/Font-Awesome/7.x/svgs/solid/bolt.svg" width="28" alt="Performance"> &nbsp;&nbsp; <img src="https://raw.githubusercontent.com/FortAwesome/Font-Awesome/7.x/svgs/solid/yin-yang.svg" width="28" alt="Balanced"> &nbsp;&nbsp; <img src="https://raw.githubusercontent.com/FortAwesome/Font-Awesome/7.x/svgs/solid/recycle.svg" width="28" alt="Power saver">
+<img src="assets/bolt.svg" width="28" alt="Performance"> &nbsp;&nbsp; <img src="assets/yin-yang.svg" width="28" alt="Balanced"> &nbsp;&nbsp; <img src="assets/recycle.svg" width="28" alt="Power saver">
 
 **Performance when you need it. Your usual profile when you don't.**
 
@@ -71,3 +71,5 @@ powerprofilesctl launch --profile performance -- cargo build
 ## Tests
 
 Run `make test` for the C, CLI, JavaScript and isolated D-Bus integration tests. These require `jq`, Node.js, `dbus-run-session` and Python with PyGObject (`python-gobject` on Arch; override `PYTHON` if needed). The tests use mock power-profile and systemd services; check the widget in Omarchy separately.
+
+Header icons by [Font Awesome](https://fontawesome.com), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
