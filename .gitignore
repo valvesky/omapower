@@ -1,0 +1,5 @@
+/omapower
+/tests/test_config
+/tests/test_process
+__pycache__/
+*.pyc

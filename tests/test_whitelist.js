@@ -1,0 +1,23 @@
+const assert = require('node:assert/strict')
+const fs = require('node:fs')
+const vm = require('node:vm')
+const source = fs.readFileSync(__dirname + '/../plugin/Whitelist.js', 'utf8').replace(/^\.pragma library\s*/, '')
+const context = vm.createContext({})
+vm.runInContext(source, context)
+const parse = text => JSON.parse(JSON.stringify(context.parse(text)))
+assert.deepEqual(parse('{"commands":["rustc","cargo","rustc"]}'), { commands: ['cargo', 'rustc'] })
+assert.deepEqual(parse('{"commands":[]}'), { commands: [] })
+assert.deepEqual(parse('{"commands":["<img>"]}'), { commands: ['<img>'] })
+for (const value of ['{}', 'broken', '{"commands":["/bin/cargo"]}', '{"commands":[1]}', '{"commands":["1234567890123456"]}', '{"commands":["éééééééé"]}', '{"commands":["line\\nfeed"]}']) {
+    assert.equal(parse(value), null, value)
+}
+assert.equal(parse('x'.repeat(65537)), null)
+// The configured names are untrusted; the display must never auto-render markup.
+const panel = fs.readFileSync(__dirname + '/../plugin/Panel.qml', 'utf8')
+assert.match(panel, /id: chipLabel[\s\S]*?text: chip\.modelData[\s\S]*?textFormat: Text\.PlainText/)
+const widget = fs.readFileSync(__dirname + '/../plugin/BarWidget.qml', 'utf8')
+assert.match(widget, /--watch-widget/)
+assert.match(widget, /PowerProfiles\.profile/)
+assert.doesNotMatch(widget, /repeat:\s*true/)
+assert.doesNotMatch(widget, /profileQuery|serviceQuery|whitelistQuery/)
+console.log('widget parser, plain-text display and event-driven wiring tests passed')

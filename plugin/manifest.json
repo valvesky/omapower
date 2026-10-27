@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "raw.omapower",
+  "name": "Omapower",
+  "version": "0.2.0",
+  "description": "View whitelisted commands and control automatic performance mode",
+  "author": "raw",
+  "kinds": ["bar-widget"],
+  "entryPoints": {"barWidget": "BarWidget.qml"},
+  "barWidget": {"displayName": "Omapower", "description": "Automatic performance profile controls and whitelist", "category": "System", "allowMultiple": false}
+}
